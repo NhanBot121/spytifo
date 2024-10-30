@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Spytifo</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="home_blank_fragment">This is home fragment</string>
+    <string name="search_blank_fragment">This is search fragment</string>
+    <string name="library_blank_fragment">This is library fragment</string>
+    <string name="title_home">Home\n</string>
+    <string name="title_search">Search</string>
+    <string name="title_library">Library</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+
+</resources>
