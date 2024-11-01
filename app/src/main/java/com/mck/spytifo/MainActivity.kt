@@ -1,29 +1,23 @@
 package com.mck.spytifo
 
+import android.Manifest
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import android.widget.ImageButton
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
-import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.navigation.findNavController
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.mck.spytifo.ui.theme.SpytifoTheme
 
 class MainActivity : AppCompatActivity() {
 
@@ -35,47 +29,44 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
-        // Get a ref. to the navHostFragment
+        // Request notification permission on Android 13+ before starting playback
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+            }
+        }
+
+        // Get a reference to the NavHostFragment
         val navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
 
-        // Link the bottom navigation bar
-        //to the navigation controller
+        // Link the bottom navigation bar to the navigation controller
         val bottomNavView = findViewById<BottomNavigationView>(R.id.nav_view)
         bottomNavView.setupWithNavController(navController)
 
-        playButton = findViewById<ImageButton>(R.id.playButton)
-        pauseButton = findViewById<ImageButton>(R.id.pauseButton)
+        playButton = findViewById(R.id.playButton)
+        pauseButton = findViewById(R.id.pauseButton)
 
         // Initially, show the play button and hide the pause button
-        playButton.visibility = View.VISIBLE
-        pauseButton.visibility = View.GONE
+        togglePlayPause(isPlaying = false)
 
         // Play button click listener
         playButton.setOnClickListener {
-            // Start the playback service with the play action
             val playIntent = Intent(this, PlaybackService::class.java).apply {
                 action = PlaybackService.ACTION_PLAY
             }
             startService(playIntent)
-
-            // Toggle buttons
-            playButton.visibility = View.GONE
-            pauseButton.visibility = View.VISIBLE
+            togglePlayPause(isPlaying = true)
         }
 
         // Pause button click listener
         pauseButton.setOnClickListener {
-            // Start the playback service with the pause action
             val pauseIntent = Intent(this, PlaybackService::class.java).apply {
                 action = PlaybackService.ACTION_PAUSE
             }
             startService(pauseIntent)
-
-            // Toggle buttons
-            pauseButton.visibility = View.GONE
-            playButton.visibility = View.VISIBLE
+            togglePlayPause(isPlaying = false)
         }
     }
 
@@ -87,19 +78,36 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        unregisterReceiver(playbackStateReceiver)
+        try {
+            unregisterReceiver(playbackStateReceiver)
+        } catch (e: IllegalArgumentException) {
+            Log.e("MainActivity", "Receiver not registered")
+        }
     }
 
     private val playbackStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
             val state = intent?.getStringExtra("state")
             if (state == "playing") {
-                playButton.visibility = View.GONE
-                pauseButton.visibility = View.VISIBLE
+                togglePlayPause(isPlaying = true)
             } else if (state == "paused") {
-                playButton.visibility = View.VISIBLE
-                pauseButton.visibility = View.GONE
+                togglePlayPause(isPlaying = false)
             }
+        }
+    }
+
+    // Toggle play and pause button visibility
+    private fun togglePlayPause(isPlaying: Boolean) {
+        playButton.visibility = if (isPlaying) View.GONE else View.VISIBLE
+        pauseButton.visibility = if (isPlaying) View.VISIBLE else View.GONE
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 1 && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            Toast.makeText(this, "Notification permission granted", Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, "Notification permission denied", Toast.LENGTH_SHORT).show()
         }
     }
 }

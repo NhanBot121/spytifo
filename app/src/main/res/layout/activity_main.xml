@@ -27,7 +27,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:padding="16dp"
-        android:background="@color/white">
+        android:background="@color/material_on_surface_disabled">
 
         <TextView
             android:id="@+id/songTitle"
@@ -59,7 +59,7 @@
         android:id="@+id/nav_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="?android:attr/windowBackground"
+        android:background="?android:attr/windowBackgroundFallback"
         app:menu="@menu/bottom_nav_menu" />
 
 </LinearLayout>

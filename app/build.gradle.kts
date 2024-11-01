@@ -42,6 +42,10 @@ android {
 dependencies {
     val nav_version = "2.8.3"
 
+    implementation("androidx.media:media:1.7.0") // Check for the latest version
+
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+
     // Jetpack Compose integration
     implementation("androidx.navigation:navigation-compose:$nav_version")
 
